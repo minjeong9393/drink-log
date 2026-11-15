@@ -419,7 +419,7 @@ textarea.field{height:auto;min-height:70px;padding:10px 12px;line-height:1.5;res
 }
 .pdrop svg{width:22px;height:22px}
 .pprev{position:relative;border-radius:13px;overflow:hidden;border:1px solid var(--line);background:var(--surface-2)}
-.pprev img{display:block;width:100%;max-height:230px;object-fit:cover}
+.pprev img{display:block;width:100%;max-height:200px;object-fit:cover}
 .pprev .pbtns{position:absolute;right:8px;bottom:8px;display:flex;gap:6px}
 .pprev .pbtn{
   height:30px;padding:0 10px;border-radius:999px;border:0;background:rgba(30,10,18,.74);
@@ -1055,8 +1055,11 @@ textarea.field{height:auto;min-height:70px;padding:10px 12px;line-height:1.5;res
       '<button type="button" class="sbtn" data-act="setSort" data-sort="new" aria-pressed="' + (ui.sort === 'new') + '">최신순</button>' +
       '<button type="button" class="sbtn" data-act="setSort" data-sort="rate" aria-pressed="' + (ui.sort === 'rate') + '">별점순</button>' +
       '<button type="button" class="sbtn rate" data-act="toggleRate4" aria-pressed="' + ui.rate4 + '">★4.0+</button></div>';
+    var footNote = sync.key
+      ? state.records.length + '병 기록 · 남편과 연동 중 (' + esc(displayRoom()) + ')'
+      : state.records.length + '병 기록 · 혼자 쓰는 중 · 이 기기에만 저장돼요';
     return '<div class="listwrap">' + bar + monthGroups(list).map(groupHtml).join('') +
-      '<p class="listfoot">' + state.records.length + '병 기록 · 이 기기에만 저장되고, 연동하면 남편과 함께 봐요</p>' +
+      '<p class="listfoot">' + footNote + '</p>' +
     '</div>';
   }
 

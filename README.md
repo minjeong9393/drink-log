@@ -4,6 +4,7 @@
 광고·추적·외부 SDK 없이 화면 하나(HTML)로 동작하고, 사진과 기록은 기기 브라우저(IndexedDB)에만
 저장됩니다. 남편과 연동하면 방 코드를 아는 기기끼리 실시간으로 같은 주록을 봅니다.
 
+- 앱 주소: **https://minjeong9393.github.io/drink-log/** — 폰 크롬에서 열고 `홈 화면에 추가`를 누르면 앱처럼 열려요
 - 앱 이름: **SCMJ 주록**
 - 색: 와인 `#c2335c` · 별점 금 `#efa51c` · 배경 `#faf7f9`
 - 저장: IndexedDB `drink_log_db` (records · photos) + 목록 캐시 `localStorage['drink_log_meta_v1']`

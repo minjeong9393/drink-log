@@ -492,6 +492,147 @@ textarea.field{height:auto;min-height:70px;padding:10px 12px;line-height:1.5;res
   .gallery{gap:4px}
 }
 
+/* ==================================================================
+   PC (900px 이상) — 같은 화면을 넓게 펼친다.
+   모바일 규칙(위)은 그대로 두고 여기서만 갈아 끼우며, DOM 구조·셀렉터는 바꾸지 않는다.
+   ================================================================== */
+.pcadd{display:none}      /* 헤더 기록 버튼은 PC 에서만 */
+.pdrophint{display:none}  /* "끌어다 놓기" 안내도 PC 에서만 */
+
+@keyframes pop{from{opacity:0;transform:translate(-50%,-48%) scale(.985)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+
+@media (min-width:900px){
+  body{background:#f1e8ed;font-size:15px}
+  #root{max-width:none;width:100%;height:100vh;height:100dvh;box-shadow:none}
+
+  /* ---------- 앱바: 전체 폭, 내용은 1180px 중앙 ---------- */
+  .appbar{border-bottom:1px solid var(--line-2);box-shadow:0 1px 0 rgba(48,16,28,.04)}
+  .abin{
+    max-width:1180px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;
+    gap:8px 12px;padding:12px 26px 9px;
+  }
+  .brandrow{display:contents}
+  .logo{order:0;width:34px;height:34px;border-radius:11px}
+  .bname{order:1;flex:0 0 auto;max-width:220px;font-size:18px}
+  .searchrow{order:2;flex:1 1 300px;min-width:180px;padding:0}
+  .searchbox{height:38px;border-radius:12px}
+  .searchbox input{font-size:14.5px}
+  .pcadd{
+    order:3;display:inline-flex;align-items:center;gap:5px;height:36px;padding:0 15px;
+    border:0;border-radius:11px;background:var(--accent);color:#fff;white-space:nowrap;
+    font-size:13.5px;font-weight:800;letter-spacing:-.02em;
+    box-shadow:0 6px 16px -10px rgba(156,31,69,.7);
+    transition:background .14s,transform .12s,box-shadow .14s;
+  }
+  .pcadd svg{width:15px;height:15px;display:block}
+  .pcadd:hover{background:#ab2a50;box-shadow:0 10px 22px -12px rgba(156,31,69,.85)}
+  .pcadd:active{transform:translateY(1px)}
+  #syncpill{order:4;height:34px;font-size:11.5px;transition:background .14s,color .14s,border-color .14s}
+  .syncpill:hover{border-color:var(--accent);color:var(--accent-ink)}
+  .iconbtn[data-act="openMore"]{order:5;width:36px;height:36px;transition:background .14s,color .14s}
+  .iconbtn[data-act="openMore"]:hover{background:var(--surface-2);color:var(--text)}
+  .catbar{
+    order:6;flex:1 1 100%;width:100%;flex-wrap:wrap;overflow:visible;gap:6px;padding:2px 0 0;
+  }
+  .cat{height:30px;transition:background .14s,border-color .14s,color .14s}
+  .cat:hover{background:var(--surface-2);border-color:var(--line-2)}
+  .cat[aria-pressed="true"]:hover{background:var(--soft,var(--accent-soft))}
+
+  /* ---------- 본문: 왼쪽 요약·탭 + 오른쪽 넓은 내용 ---------- */
+  .pcshell{
+    display:grid;grid-template-columns:minmax(0,320px) minmax(0,1fr);gap:24px;align-items:start;
+    max-width:1180px;margin:0 auto;padding:20px 26px 40px;
+  }
+  .pcside{position:sticky;top:14px;min-width:0}
+  .pcmain{min-width:0}
+
+  .hero{margin:0 0 12px;padding:16px 17px 13px}
+  .hcount{font-size:36px}
+  .hsub{font-size:12.5px}
+  .tabs{
+    flex-direction:column;gap:3px;margin:0;padding:5px;
+    background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow-s);
+  }
+  .tabs button{
+    flex:0 0 auto;width:100%;height:40px;padding:0 13px;border-radius:10px;
+    display:flex;align-items:center;text-align:left;font-size:13.5px;
+    transition:background .14s,color .14s;
+  }
+  .tabs button:hover{background:var(--surface-2);color:var(--text)}
+  .tabs button[aria-selected="true"]{background:var(--accent-soft);color:var(--accent-ink);box-shadow:none}
+  .tabs button[aria-selected="true"]:hover{background:#fbdde7}
+
+  /* 내역 — 2열 카드 */
+  .listwrap{padding:0}
+  .listbar{padding:0 2px 10px;gap:6px}
+  .mgroup{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:20px}
+  .mhead{grid-column:1/-1;padding:0 2px 1px}
+  .mgroup .rcard{margin-bottom:0}
+  .rcard{padding:12px;transition:transform .12s ease,box-shadow .16s ease,border-color .16s ease}
+  .rcard:hover{
+    transform:translateY(-1px);border-color:#e7d5dc;
+    box-shadow:0 2px 4px rgba(48,16,28,.04),0 14px 26px -18px rgba(48,16,28,.5);
+  }
+  .rcard:active{transform:none;background:var(--surface)}
+  .thumb{width:66px;height:66px}
+  .sbtn{transition:background .14s,border-color .14s}
+  .sbtn:hover{background:var(--surface-2)}
+  .listwrap .empty{max-width:520px;margin:6px auto}
+
+  /* 사진 — 다열 그리드 */
+  .gallery{grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:12px;padding:0}
+  .gcell{border-radius:14px;transition:transform .14s ease,box-shadow .16s ease}
+  .gcell:hover{transform:translateY(-2px);box-shadow:0 16px 30px -20px rgba(48,16,28,.55)}
+  .gcell:hover .gover{background:linear-gradient(180deg,rgba(28,8,16,.06),rgba(28,8,16,.82))}
+  .gcell .gover b{font-size:11.5px}
+
+  /* 통계 — 2열 패널 (전체 요약은 가로로) */
+  .statswrap{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:0;align-items:start}
+  .panel{margin-bottom:0}
+  .panel.total{grid-column:1/-1}
+  .statswrap .empty{grid-column:1/-1;max-width:520px;margin:6px auto}
+
+  /* ---------- 시트: 바텀시트 → 화면 가운데 모달 ---------- */
+  .sheet{
+    top:50%;left:50%;right:auto;bottom:auto;margin:0;transform:translate(-50%,-50%);
+    width:min(560px,92vw);max-width:560px;max-height:86vh;border-radius:20px;padding-bottom:0;
+    box-shadow:0 30px 80px -26px rgba(44,16,28,.45),0 2px 10px rgba(44,16,28,.14);
+    animation:pop .18s cubic-bezier(.22,.8,.24,1);
+  }
+  .sheet .grab{display:none}
+  .sheet-head{padding:16px 18px 8px}
+  .sheet-body{padding:2px 18px 16px}
+  .sheet-foot{padding:10px 18px 14px;border-bottom-left-radius:20px;border-bottom-right-radius:20px}
+
+  /* 버튼·목록 hover */
+  .act{transition:background .14s,color .14s}
+  .act:hover{background:var(--surface-2);color:var(--text)}
+  .menulist button{transition:background .14s}
+  .menulist button:hover{background:var(--surface-2)}
+  .btn{transition:background .14s,border-color .14s}
+  .btn:hover{background:var(--surface-2)}
+  .btn.primary:hover{background:#ab2a50;border-color:#ab2a50}
+  .btn.ghost:hover{background:#fdf1ef}
+  .pickbtn{transition:background .14s,border-color .14s}
+  .pickbtn:hover{background:var(--surface-2)}
+  .pickbtn.primary:hover{background:#fbdfe9;border-color:rgba(194,51,92,.45)}
+  .chip-sel{transition:background .14s,border-color .14s}
+  .chip-sel:hover{background:var(--surface-2)}
+  .chip-sel[aria-pressed="true"]:hover{background:var(--soft,var(--accent-soft))}
+  .star .sb{transition:color .12s}
+  .star:hover .sb{color:#e0cfd6}
+
+  /* 사진 끌어다 놓기 */
+  .pdrop{height:118px;transition:border-color .14s,background .14s,color .14s}
+  .pdrop:hover{border-color:#dcc3cd;background:#f9f3f6;color:var(--text-2)}
+  .pdrophint{display:block;margin-top:1px;font-size:11px;font-weight:600;color:var(--text-3)}
+  #photoBox.dragging .pdrop{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-ink)}
+
+  /* FAB 대신 헤더 버튼, 토스트는 화면 아래 가운데 */
+  .fab{display:none}
+  #toast{bottom:34px;max-width:420px}
+}
+
 </style>
 </head>
 <body>
@@ -511,7 +652,7 @@ textarea.field{height:auto;min-height:70px;padding:10px 12px;line-height:1.5;res
   /* ------------------------------------------------------------------ *
    *  상수
    * ------------------------------------------------------------------ */
-  var APP_VER = '1.0.0';
+  var APP_VER = '1.1.0';
   var KEY_META = 'drink_log_meta_v1';
   var KEY_ROOM = 'drink_log_sync_room_v1';
   var KEY_SYNC = 'drink_log_sync_meta_v1';
@@ -955,9 +1096,13 @@ textarea.field{height:auto;min-height:70px;padding:10px 12px;line-height:1.5;res
           ' aria-pressed="' + (ui.cat === c.key) + '">' + c.emoji + ' ' + c.label +
           ' <b>' + (counts[c.key] || 0) + '</b></button>';
       }).join('');
-    return '<div class="brandrow">' +
+    /* .abin — PC(900px 이상)에서만 앱바 내용을 1180px 중앙 정렬로 묶는 틀. 모바일에서는 그냥 블록. */
+    return '<div class="abin">' +
+      '<div class="brandrow">' +
         '<span class="logo" style="background:linear-gradient(160deg,#c2335c,#7a1430);color:#fff">' + ICONS.wine + '</span>' +
         '<span class="bname">SCMJ 주록</span>' +
+        /* PC 전용 — 마우스로 바로 누르는 기록 버튼 (모바일은 CSS 로 숨김, FAB 를 쓴다) */
+        '<button type="button" class="pcadd" data-act="newRecordTop" aria-label="새 기록">' + ICONS.plus + '<span>새 기록</span></button>' +
         '<button type="button" class="syncpill" id="syncpill" data-act="openSync" data-status="' + computeStatus() + '"' +
         ' aria-label="남편 연동 — ' + syncStatusText() + '" title="남편 연동">' + ICONS.cloud +
         '<span class="lbl2">' + syncStatusText() + '</span></button>' +
@@ -967,7 +1112,8 @@ textarea.field{height:auto;min-height:70px;padding:10px 12px;line-height:1.5;res
         '<input id="q" type="search" inputmode="search" autocomplete="off" placeholder="이름 · 메모 · 구매처 검색" value="' + esc(ui.q) + '" aria-label="검색">' +
         '<button type="button" class="clr" data-act="clearQ" aria-label="검색 지우기">' + ICONS.close + '</button>' +
       '</div></div>' +
-      '<div class="catbar" role="group" aria-label="카테고리">' + chips + '</div>';
+      '<div class="catbar" role="group" aria-label="카테고리">' + chips + '</div>' +
+    '</div>';
   }
 
   /* ------------------------------------------------------------------ *
@@ -1152,9 +1298,10 @@ textarea.field{height:auto;min-height:70px;padding:10px 12px;line-height:1.5;res
     if (!canStore) {
       body += '<div class="notice"><span>이 화면에서는 자동 저장을 쓸 수 없어요. 기록을 꼭 백업해 두세요.</span></div>';
     }
-    body += renderHero(list);
-    body += renderTabs();
-    body += ui.tab === 'stats' ? renderStats() : (ui.tab === 'photos' ? renderPhotos(list) : renderList(list));
+    body += '<div class="pcshell"><div class="pcside">' + renderHero(list) + renderTabs() + '</div>' +
+      '<div class="pcmain">' +
+        (ui.tab === 'stats' ? renderStats() : (ui.tab === 'photos' ? renderPhotos(list) : renderList(list))) +
+      '</div></div>';
     view.innerHTML = body;
     el('fabhost').innerHTML = '<button type="button" class="fab" data-act="newRecord" aria-label="기록 추가">' + ICONS.plus + '기록</button>';
     view.scrollTop = top;
@@ -1271,13 +1418,31 @@ textarea.field{height:auto;min-height:70px;padding:10px 12px;line-height:1.5;res
         '<p class="pinfo" id="photoInfo">' + (info && info.w ? info.w + '×' + info.h + ' · ' : '') + bytesText(bytes) +
         ' · 남편과 연동해도 이 정도면 금방 보내요</p>';
     }
-    return '<div class="pdrop">' + ICONS.camera + '<span>사진을 붙이면 목록에 병 사진이 보여요</span></div>';
+    return '<div class="pdrop">' + ICONS.camera + '<span>사진을 붙이면 목록에 병 사진이 보여요</span>' +
+      '<span class="pdrophint">여기로 사진을 끌어다 놓아도 돼요</span></div>';
   }
 
   function paintPhotoBox() {
     var box = el('photoBox');
     if (box) box.innerHTML = photoBoxHtml();
     updateFoot();
+  }
+
+  function attachPhotoFile(file) {
+    if (!file || !sheet || sheet.type !== 'record' || !sheet.draft) return false;
+    if (String(file.type || '').indexOf('image/') !== 0) { toast('사진 파일을 골라 주세요'); return false; }
+    var token = (sheet.draft.photoToken = (sheet.draft.photoToken || 0) + 1);
+    toast('사진을 줄이는 중…');
+    compressPhoto(file).then(function (info) {
+      if (!sheet || !sheet.draft || sheet.draft.photoToken !== token) return;
+      if (!info || !info.data) { toast('사진을 읽지 못했어요'); return; }
+      sheet.draft.photo = info.data;
+      sheet.draft.photoInfo = info;
+      paintPhotoBox();
+      if (info.bytes > PHOTO_CAP) toast('사진이 커서 ' + bytesText(info.bytes) + '로 저장돼요');
+      else toast('사진 붙였어요 · ' + bytesText(info.bytes));
+    });
+    return true;
   }
 
   /* 사진 줄이기 — 긴 변 MAXDIM, JPEG QUALITY. 250KB 를 넘으면 한 단계씩 더 줄인다. */
@@ -2152,6 +2317,10 @@ textarea.field{height:auto;min-height:70px;padding:10px 12px;line-height:1.5;res
     newRecord: function () {
       openSheet({ type: 'record', draft: recordDraft(null), recId: '' });
     },
+    /* 헤더(PC 전용)의 새 기록 버튼 — FAB 와 같은 동작 */
+    newRecordTop: function () {
+      openSheet({ type: 'record', draft: recordDraft(null), recId: '' });
+    },
     saveRecord: function () { saveRecord(); },
     openDetail: function (btn) {
       var id = btn.dataset.id;
@@ -2347,19 +2516,7 @@ textarea.field{height:auto;min-height:70px;padding:10px 12px;line-height:1.5;res
     if (t.dataset.change === 'photo') {
       var file = t.files && t.files[0];
       t.value = '';
-      if (!file || !sheet || !sheet.draft) return;
-      if (String(file.type || '').indexOf('image/') !== 0) { toast('사진 파일을 골라 주세요'); return; }
-      var token = (sheet.draft.photoToken = (sheet.draft.photoToken || 0) + 1);
-      toast('사진을 줄이는 중…');
-      compressPhoto(file).then(function (info) {
-        if (!sheet || !sheet.draft || sheet.draft.photoToken !== token) return;
-        if (!info || !info.data) { toast('사진을 읽지 못했어요'); return; }
-        sheet.draft.photo = info.data;
-        sheet.draft.photoInfo = info;
-        paintPhotoBox();
-        if (info.bytes > PHOTO_CAP) toast('사진이 커서 ' + bytesText(info.bytes) + '로 저장돼요');
-        else toast('사진 붙였어요 · ' + bytesText(info.bytes));
-      });
+      attachPhotoFile(file);
       return;
     }
     if (t.dataset.change === 'importFile') {
@@ -2377,6 +2534,39 @@ textarea.field{height:auto;min-height:70px;padding:10px 12px;line-height:1.5;res
       reader.readAsText(f);
       t.value = '';
     }
+  });
+
+  /* ------------------------------------------------------------------ *
+   *  PC — 사진을 마우스로 끌어다 놓기 (파일 선택과 같은 축소 파이프라인)
+   * ------------------------------------------------------------------ */
+  function dropBoxOf(node) {
+    if (!node || !node.closest) return null;
+    if (!sheet || sheet.type !== 'record' || !sheet.draft) return null;
+    return node.closest('#photoBox');
+  }
+
+  document.addEventListener('dragover', function (e) {
+    if (!sheet || sheet.type !== 'record') return;
+    /* 기록 시트가 열려 있는 동안에는 어디에 떨어뜨려도 브라우저가 그 파일을 열어 버리지 않게 */
+    e.preventDefault();
+    if (e.dataTransfer) { try { e.dataTransfer.dropEffect = 'copy'; } catch (err) { } }
+    var box = dropBoxOf(e.target);
+    if (box && !box.classList.contains('dragging')) box.classList.add('dragging');
+  });
+
+  document.addEventListener('dragleave', function (e) {
+    var box = dropBoxOf(e.target);
+    if (box && !(e.relatedTarget && box.contains(e.relatedTarget))) box.classList.remove('dragging');
+  });
+
+  document.addEventListener('drop', function (e) {
+    var box = dropBoxOf(e.target);
+    if (!box) return;
+    e.preventDefault();
+    box.classList.remove('dragging');
+    var dt = e.dataTransfer;
+    var file = dt && dt.files && dt.files[0];
+    if (file) attachPhotoFile(file);
   });
 
   document.addEventListener('keydown', function (e) {
@@ -2451,6 +2641,7 @@ textarea.field{height:auto;min-height:70px;padding:10px 12px;line-height:1.5;res
     closeSheet: closeSheet,
     toast: toast,
     compressPhoto: compressPhoto,
+    attachPhotoFile: attachPhotoFile,
     actions: actions,
     forms: forms,
     photoLimits: { maxDim: MAXDIM, quality: QUALITY, cap: PHOTO_CAP },

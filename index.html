@@ -562,10 +562,10 @@ textarea.field{height:auto;min-height:70px;padding:10px 12px;line-height:1.5;res
   .tabs button[aria-selected="true"]{background:var(--accent-soft);color:var(--accent-ink);box-shadow:none}
   .tabs button[aria-selected="true"]:hover{background:#fbdde7}
 
-  /* 내역 — 2열 카드 */
+  /* 내역 — 넓은 화면에서는 2열 카드 (1000px 이상: 카드가 좁으면 배지가 잘려서 1열) */
   .listwrap{padding:0}
   .listbar{padding:0 2px 10px;gap:6px}
-  .mgroup{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:20px}
+  .mgroup{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin-bottom:20px}
   .mhead{grid-column:1/-1;padding:0 2px 1px}
   .mgroup .rcard{margin-bottom:0}
   .rcard{padding:12px;transition:transform .12s ease,box-shadow .16s ease,border-color .16s ease}
@@ -631,6 +631,11 @@ textarea.field{height:auto;min-height:70px;padding:10px 12px;line-height:1.5;res
   /* FAB 대신 헤더 버튼, 토스트는 화면 아래 가운데 */
   .fab{display:none}
   #toast{bottom:34px;max-width:420px}
+}
+
+/* 카드 두 칸이 제대로 들어가는 폭부터 2열 */
+@media (min-width:1000px){
+  .mgroup{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 
 </style>

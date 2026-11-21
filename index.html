@@ -474,6 +474,32 @@ textarea.field{height:auto;min-height:70px;padding:10px 12px;line-height:1.5;res
   background:var(--accent-soft);border-radius:11px;font-size:12px;font-weight:600;color:var(--text-2);line-height:1.4;
 }
 
+/* ---------- 임시 저장 (작성 중 글) — 한 줄짜리로 절제 ---------- */
+.draftbar{
+  display:flex;align-items:center;gap:8px;width:calc(100% - 24px);margin:0 12px 8px;
+  padding:9px 11px;border-radius:12px;border:1px solid #f0dcae;background:#fff9ea;
+  color:#7d5a10;font:inherit;text-align:left;cursor:pointer;
+}
+.draftbar .dbi{display:flex;flex:0 0 auto;width:17px;height:17px;color:#b8860b}
+.draftbar .dbi svg{width:17px;height:17px;display:block}
+.draftbar .dbt{flex:1;min-width:0;font-size:12px;font-weight:700;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.draftbar .dba{flex:0 0 auto;font-size:11.5px;font-weight:800;color:#a2700a}
+.dnote{
+  display:flex;align-items:center;gap:9px;margin:0 0 2px;padding:8px 10px;
+  border-radius:11px;background:#fff9ea;border:1px solid #f2ddb0;
+}
+.dnote span{flex:1;min-width:0;font-size:11.5px;font-weight:700;color:#7d5a10;line-height:1.35}
+.dnote .dlink{
+  flex:0 0 auto;padding:5px 9px;border-radius:8px;border:1px solid #e6c886;background:#fff;
+  color:#96660a;font:inherit;font-size:11.5px;font-weight:800;cursor:pointer;
+}
+.dstat{
+  display:inline-block;margin-left:7px;font-size:10.5px;font-weight:700;color:var(--text-3);
+  letter-spacing:0;opacity:0;transition:opacity .2s;
+}
+.dstat.on{opacity:1}
+.dstat.warn{opacity:1;color:var(--accent-ink)}
+
 /* ---------- toast ---------- */
 #toast{
   position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 74px);
@@ -545,6 +571,7 @@ textarea.field{height:auto;min-height:70px;padding:10px 12px;line-height:1.5;res
   }
   .pcside{position:sticky;top:14px;min-width:0}
   .pcmain{min-width:0}
+  .draftbar{width:auto;margin:0 0 12px}
 
   .hero{margin:0 0 12px;padding:16px 17px 13px}
   .hcount{font-size:36px}
@@ -657,12 +684,14 @@ textarea.field{height:auto;min-height:70px;padding:10px 12px;line-height:1.5;res
   /* ------------------------------------------------------------------ *
    *  상수
    * ------------------------------------------------------------------ */
-  var APP_VER = '1.1.0';
+  var APP_VER = '1.2.0';
   var KEY_META = 'drink_log_meta_v1';
   var KEY_ROOM = 'drink_log_sync_room_v1';
   var KEY_SYNC = 'drink_log_sync_meta_v1';
+  var KEY_DRAFT = 'drink_log_draft_v1';
   var DB_NAME = 'drink_log_db';
-  var DB_VER = 1;
+  var DB_VER = 2;   /* v2: drafts 저장소 — 임시 저장 사진이 localStorage 에 안 들어갈 때 */
+  var DRAFT_DEBOUNCE = 200;
   var STATE_V = 3;
 
   /* 사진: 남편 폰과 Firebase 로 주고받으므로 작게 — 긴 변 800px, JPEG 0.72, 250KB 넘으면 더 줄인다 */
@@ -836,6 +865,7 @@ textarea.field{height:auto;min-height:70px;padding:10px 12px;line-height:1.5;res
         var db = req.result;
         if (!db.objectStoreNames.contains('records')) db.createObjectStore('records', { keyPath: 'id' });
         if (!db.objectStoreNames.contains('photos')) db.createObjectStore('photos', { keyPath: 'id' });
+        if (!db.objectStoreNames.contains('drafts')) db.createObjectStore('drafts', { keyPath: 'id' });
       };
       req.onsuccess = function () { resolve(req.result); };
       req.onerror = function () { HS_IDB_OFF(); resolve(null); };
@@ -1075,6 +1105,7 @@ textarea.field{height:auto;min-height:70px;padding:10px 12px;line-height:1.5;res
     download: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v10M7.5 10.5L12 15l4.5-4.5"/><path d="M4.5 18.5h15"/></svg>',
     upload: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V5M7.5 9.5L12 5l4.5 4.5"/><path d="M4.5 18.5h15"/></svg>',
     table: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M3.5 9.5h17M9.5 9.5v10M15 9.5v10"/></svg>',
+    pencil: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 19.5l4.2-.9L19 8.3a2 2 0 0 0 0-2.8l-.5-.5a2 2 0 0 0-2.8 0L5.4 15.3z"/><path d="M14.4 6.5l3.1 3.1"/></svg>',
     sparkle: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M18 16.5l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"/></svg>',
     eye: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.8 12S6 6.2 12 6.2 21.2 12 21.2 12 18 17.8 12 17.8 2.8 12 2.8 12z"/><circle cx="12" cy="12" r="2.8"/></svg>',
     grid: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><rect x="4" y="4" width="7" height="7" rx="1.6"/><rect x="13" y="4" width="7" height="7" rx="1.6"/><rect x="4" y="13" width="7" height="7" rx="1.6"/><rect x="13" y="13" width="7" height="7" rx="1.6"/></svg>'
@@ -1304,7 +1335,7 @@ textarea.field{height:auto;min-height:70px;padding:10px 12px;line-height:1.5;res
       body += '<div class="notice"><span>이 화면에서는 자동 저장을 쓸 수 없어요. 기록을 꼭 백업해 두세요.</span></div>';
     }
     body += '<div class="pcshell"><div class="pcside">' + renderHero(list) + renderTabs() + '</div>' +
-      '<div class="pcmain">' +
+      '<div class="pcmain">' + draftBannerHtml() +
         (ui.tab === 'stats' ? renderStats() : (ui.tab === 'photos' ? renderPhotos(list) : renderList(list))) +
       '</div></div>';
     view.innerHTML = body;
@@ -1330,12 +1361,18 @@ textarea.field{height:auto;min-height:70px;padding:10px 12px;line-height:1.5;res
    *  시트 공통
    * ------------------------------------------------------------------ */
   function openSheet(s) { sheet = s; render(); }
-  function closeSheet() { sheet = null; render(); }
+  /* 닫기 — 기록 시트면 작성 중인 내용을 먼저 임시 저장에 남긴다 (skipDraft: 저장 직후처럼 남길 필요 없을 때) */
+  function closeSheet(skipDraft) {
+    if (!skipDraft && sheet && sheet.type === 'record') draftFlush();
+    sheet = null;
+    draftRestoreToken++;
+    render();
+  }
 
-  function sheetWrap(title, bodyHtml, footHtml, extraCls) {
+  function sheetWrap(title, bodyHtml, footHtml, extraCls, headHtml) {
     return '<div class="scrim" data-act="closeSheet"></div>' +
       '<section class="sheet ' + (extraCls || '') + '" role="dialog" aria-modal="true" aria-label="' + esc(title) + '">' +
-      '<div class="sheet-head"><div class="grab"></div><h2>' + esc(title) + '</h2>' +
+      '<div class="sheet-head"><div class="grab"></div><h2>' + esc(title) + (headHtml || '') + '</h2>' +
       '<button type="button" class="act" data-act="closeSheet" aria-label="닫기">' + ICONS.close + '</button></div>' +
       '<div class="sheet-body">' + bodyHtml + '</div>' +
       (footHtml ? '<div class="sheet-foot">' + footHtml + '</div>' : '') +
@@ -1406,6 +1443,7 @@ textarea.field{height:auto;min-height:70px;padding:10px 12px;line-height:1.5;res
     if (!sheet || !sheet.draft) return;
     sheet.draft.rating = normRating(v);
     paintStars(sheet.draft.rating);
+    draftTouchNow();
   }
 
   /* ------------------------------------------------------------------ *
@@ -1444,6 +1482,7 @@ textarea.field{height:auto;min-height:70px;padding:10px 12px;line-height:1.5;res
       sheet.draft.photo = info.data;
       sheet.draft.photoInfo = info;
       paintPhotoBox();
+      draftTouchNow();
       if (info.bytes > PHOTO_CAP) toast('사진이 커서 ' + bytesText(info.bytes) + '로 저장돼요');
       else toast('사진 붙였어요 · ' + bytesText(info.bytes));
     });
@@ -1500,6 +1539,222 @@ textarea.field{height:auto;min-height:70px;padding:10px 12px;line-height:1.5;res
   }
 
   /* ------------------------------------------------------------------ *
+   *  임시 저장 — 작성 중인 글을 이 기기에만 남긴다.
+   *  · 글자·메타는 localStorage(KEY_DRAFT), 사진이 커서 안 들어가면 IndexedDB(drafts)
+   *  · 저장/수정 저장을 누르기 전에는 목록(state.records)·통계·남편 방(Firebase)에 안 올라간다.
+   * ------------------------------------------------------------------ */
+  var draftTimer = null;
+  var draftPhotoInIdb = false;
+  var draftRestoreToken = 0;
+
+  function draftFieldsOf(src) {
+    var r = src || {};
+    return {
+      name: String(r.name == null ? '' : r.name).slice(0, 80),
+      cat: CATMAP[r.cat] ? r.cat : 'red',
+      rating: normRating(r.rating),
+      date: isDateKey(r.date) ? String(r.date) : todayKey(),
+      memo: String(r.memo == null ? '' : r.memo).slice(0, 1000),
+      place: String(r.place == null ? '' : r.place).slice(0, 60),
+      price: Math.max(0, int(r.price)),
+      again: (r.again === 'yes' || r.again === 'no') ? r.again : '',
+      photo: (typeof r.photo === 'string' && r.photo.slice(0, 11) === 'data:image/') ? r.photo : ''
+    };
+  }
+
+  /* 원래 기록(또는 빈 폼)과 달라진 게 있을 때만 임시 저장을 남긴다 */
+  function draftMeaningful(d, recId) {
+    var base = recId ? byId(recId) : null;
+    var b = draftFieldsOf(base || {});
+    var keys = ['name', 'cat', 'rating', 'date', 'memo', 'place', 'price', 'again', 'photo'];
+    for (var i = 0; i < keys.length; i++) {
+      var k = keys[i];
+      if (k === 'rating' || k === 'price') {
+        if (Number(d[k]) !== Number(b[k])) return true;
+      } else if (String(d[k] == null ? '' : d[k]) !== String(b[k] == null ? '' : b[k])) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /* 읽기 — 없거나 원본 기록이 사라진 수정 임시 저장이면 null */
+  function draftPeek() {
+    if (!canStore) return null;
+    var raw = '';
+    try { raw = window.localStorage.getItem(KEY_DRAFT); } catch (e) { return null; }
+    if (!raw) return null;
+    var o;
+    try { o = JSON.parse(raw); } catch (e) { return null; }
+    if (!o || !o.draft || typeof o.draft !== 'object') return null;
+    var kind = o.kind === 'edit' ? 'edit' : 'new';
+    var recId = kind === 'edit' ? String(o.recId || '').slice(0, 80) : '';
+    if (kind === 'edit' && (!recId || !byId(recId))) return null;
+    var d = draftFieldsOf(o.draft);
+    d.photoInfo = null;
+    return {
+      kind: kind, recId: recId, draft: d, savedAt: Number(o.savedAt) || 0,
+      photoInIdb: !!o.photoInIdb && !d.photo
+    };
+  }
+
+  /* 쓰기 — 사진까지 localStorage 에 넣어 보고, 용량이 모자라면 글자만이라도 남긴다 */
+  function draftWrite(kind, recId, d) {
+    if (!canStore) return false;
+    var payload = {
+      v: 1, kind: kind === 'edit' ? 'edit' : 'new', recId: kind === 'edit' ? String(recId || '') : '',
+      savedAt: Date.now(), draft: draftFieldsOf(d)
+    };
+    try {
+      window.localStorage.setItem(KEY_DRAFT, JSON.stringify(payload));
+      if (draftPhotoInIdb) draftPhotoDrop();
+      return true;
+    } catch (e) { }
+    var light = draftFieldsOf(d);
+    var hasPhoto = !!light.photo;
+    light.photo = '';
+    payload.draft = light;
+    payload.photoInIdb = hasPhoto;
+    try { window.localStorage.setItem(KEY_DRAFT, JSON.stringify(payload)); }
+    catch (e2) { return false; }
+    if (hasPhoto) draftKeepPhoto(d.photo);
+    else if (draftPhotoInIdb) draftPhotoDrop();
+    return true;
+  }
+
+  function draftClear() {
+    if (draftTimer) { clearTimeout(draftTimer); draftTimer = null; }
+    try { if (canStore) window.localStorage.removeItem(KEY_DRAFT); } catch (e) { }
+    if (draftPhotoInIdb) draftPhotoDrop();
+    var st = el('draftStat');
+    if (st) { st.textContent = ''; st.className = 'dstat'; }
+  }
+
+  /* 폼에 적힌 값(이름·날짜·메모·구매처·가격)을 임시 저장본으로 옮긴다. 칩·별점·사진은 이미 draft 에 있다. */
+  function draftSyncForm() {
+    if (!sheet || sheet.type !== 'record' || !sheet.draft) return;
+    var form = el('recordForm');
+    if (!form) return;
+    var g = function (n) { var x = form.querySelector('[name="' + n + '"]'); return x ? x.value : ''; };
+    var d = sheet.draft;
+    d.name = String(g('name')).slice(0, 80);
+    var dt = g('date');
+    if (isDateKey(dt)) d.date = dt;
+    d.memo = String(g('memo')).slice(0, 1000);
+    d.place = String(g('place')).slice(0, 60);
+    d.price = Math.max(0, int(g('price')));
+  }
+
+  function draftCommit() {
+    if (!sheet || sheet.type !== 'record' || !sheet.draft) return false;
+    var d = sheet.draft;
+    var st = el('draftStat');
+    if (!draftMeaningful(d, sheet.recId)) {
+      draftClear();
+      return false;
+    }
+    var ok = draftWrite(sheet.recId ? 'edit' : 'new', sheet.recId, d);
+    if (st) {
+      st.textContent = ok ? '자동 임시 저장됨' : '임시 저장 못 함';
+      st.className = ok ? 'dstat on' : 'dstat warn';
+    }
+    return ok;
+  }
+
+  function draftQueue() {
+    if (draftTimer) clearTimeout(draftTimer);
+    draftTimer = setTimeout(function () { draftTimer = null; draftCommit(); }, DRAFT_DEBOUNCE);
+  }
+
+  /* 타이핑 — 잠깐 모았다가 저장 */
+  function draftTouch() { draftSyncForm(); draftQueue(); }
+  /* 칩·별점·사진 — 바로 저장 */
+  function draftTouchNow() {
+    if (draftTimer) { clearTimeout(draftTimer); draftTimer = null; }
+    draftSyncForm();
+    draftCommit();
+  }
+  /* 닫기·새로 고침·앱 전환 직전 */
+  function draftFlush() {
+    if (!sheet || sheet.type !== 'record' || !sheet.draft) return;
+    if (draftTimer) { clearTimeout(draftTimer); draftTimer = null; }
+    draftSyncForm();
+    draftCommit();
+  }
+
+  function draftPhotoTx(mode, fn) {
+    if (!HAS_IDB) return Promise.resolve(null);
+    return openDb().then(function (db) {
+      if (!db) return null;
+      return new Promise(function (resolve) {
+        var tx;
+        try { tx = db.transaction('drafts', mode); } catch (e) { HS_IDB_OFF(); resolve(null); return; }
+        var out = null;
+        var req = null;
+        try { req = fn(tx.objectStore('drafts')); } catch (e2) { resolve(null); return; }
+        if (req) req.onsuccess = function () { out = req.result; };
+        tx.oncomplete = function () { resolve(out); };
+        tx.onerror = function () { resolve(null); };
+        tx.onabort = function () { resolve(null); };
+      });
+    }, function () { return null; });
+  }
+  function draftKeepPhoto(data) {
+    draftPhotoInIdb = true;
+    draftPhotoTx('readwrite', function (st) { return st.put({ id: 'draft', data: data, savedAt: Date.now() }); });
+  }
+  function draftPhotoDrop() {
+    draftPhotoInIdb = false;
+    draftPhotoTx('readwrite', function (st) { return st.delete('draft'); });
+  }
+  function draftPhotoLoad() {
+    return draftPhotoTx('readonly', function (st) { return st.get('draft'); }).then(function (row) {
+      return row && typeof row.data === 'string' ? row.data : '';
+    });
+  }
+  /* 사진만 IndexedDB 에 있던 임시 저장 — 시트를 연 뒤 도착하면 미리보기에 채운다 */
+  function draftPhotoRestore() {
+    var token = ++draftRestoreToken;
+    draftPhotoLoad().then(function (data) {
+      if (token !== draftRestoreToken) return;
+      if (!data) return;
+      if (!sheet || sheet.type !== 'record' || !sheet.draft || !sheet.fromDraft) return;
+      sheet.draft.photo = data;
+      sheet.draft.photoInfo = { w: 0, h: 0, bytes: dataBytes(data) };
+      paintPhotoBox();
+      updateFoot();
+    });
+  }
+
+  /* 새 기록 / 수정 시트 열기 — 같은 종류의 임시 저장이 있으면 그 내용을 불러온다 */
+  function openRecordSheet(recId) {
+    var id = recId ? String(recId) : '';
+    var rec = id ? byId(id) : null;
+    if (id && !rec) return;
+    var found = draftPeek();
+    if (found && ((found.kind === 'new' && !id) || (found.kind === 'edit' && found.recId === id))) {
+      var d = found.draft;
+      if (found.photoInIdb) { draftPhotoInIdb = true; d.photo = ''; }
+      openSheet({ type: 'record', recId: id, draft: d, fromDraft: true });
+      if (found.photoInIdb) draftPhotoRestore();
+      return;
+    }
+    openSheet({ type: 'record', recId: id, draft: recordDraft(rec), fromDraft: false });
+  }
+
+  /* 메인 화면 — 작성 중인 새 기록 임시 저장이 있으면 이어 쓰기 배너 */
+  function draftBannerHtml() {
+    if (sheet) return '';
+    var found = draftPeek();
+    if (!found || found.kind !== 'new') return '';
+    var nm = found.draft.name ? ' 「' + esc(found.draft.name) + '」' : '';
+    return '<button type="button" class="draftbar" data-act="resumeDraft" aria-label="작성 중인 임시 저장 이어 쓰기">' +
+      '<span class="dbi">' + ICONS.pencil + '</span>' +
+      '<span class="dbt">작성 중인 임시 저장 있음' + nm + '</span>' +
+      '<span class="dba">이어 쓰기</span></button>';
+  }
+
+  /* ------------------------------------------------------------------ *
    *  기록 추가/수정 시트
    * ------------------------------------------------------------------ */
   function recordDraft(r) {
@@ -1519,6 +1774,14 @@ textarea.field{height:auto;min-height:70px;padding:10px 12px;line-height:1.5;res
     var d = sheet.draft;
     var editing = !!sheet.recId;
     var h = '<form id="recordForm" data-form="recordForm" autocomplete="off">';
+
+    /* 임시 저장에서 불러온 글 — 안내 + 새로 쓰기 / 원래대로 */
+    if (sheet.fromDraft) {
+      h += '<div class="dnote" id="draftNote"><span>' +
+        (editing ? '수정 중이던 임시 저장을 불러왔어요' : '임시 저장된 글을 불러왔어요') + '</span>' +
+        '<button type="button" class="dlink" data-act="' + (editing ? 'revertDraft' : 'discardDraft') + '">' +
+        (editing ? '원래대로' : '새로 쓰기') + '</button></div>';
+    }
 
     h += '<label class="lbl" for="fName">술 이름</label>' +
       '<input id="fName" class="field" name="name" value="' + esc(d.name) + '" maxlength="80" placeholder="예: 와인 이름" aria-label="술 이름">';
@@ -1560,7 +1823,8 @@ textarea.field{height:auto;min-height:70px;padding:10px 12px;line-height:1.5;res
       (editing ? '<button type="button" class="btn ghost" data-act="askDelete">삭제</button>' : '') +
       '<button type="button" class="btn primary" data-act="saveRecord">' + (editing ? '수정 저장' : '저장') + '</button>' +
       '</div>';
-    return sheetWrap(editing ? '기록 수정' : '새 기록', h, foot);
+    return sheetWrap(editing ? '기록 수정' : '새 기록', h, foot, '',
+      '<span class="dstat" id="draftStat" role="status" aria-live="polite"></span>');
   }
 
   function updateFoot() {
@@ -1748,7 +2012,8 @@ textarea.field{height:auto;min-height:70px;padding:10px 12px;line-height:1.5;res
     rec.id = editing ? sheet.recId : '';
     var saved = editing ? updateRecord(rec) : addRecord(rec);
     if (!saved) { toast('저장하지 못했어요'); return; }
-    closeSheet();
+    draftClear();
+    closeSheet(true);
     toast(editing ? '수정했어요' : '기록했어요 · ' + catOf(saved.cat).label);
   }
 
@@ -1811,6 +2076,7 @@ textarea.field{height:auto;min-height:70px;padding:10px 12px;line-height:1.5;res
     state = { v: STATE_V, records: clean, removed: {}, updatedAt: new Date().toISOString() };
     persist();
     syncPushAll();
+    draftClear();
     ui.cat = 'all'; ui.q = ''; ui.rate4 = false; ui.tab = 'list';
     closeSheet();
     toast('불러왔어요 · ' + clean.length + '병');
@@ -2301,7 +2567,11 @@ textarea.field{height:auto;min-height:70px;padding:10px 12px;line-height:1.5;res
   });
   document.addEventListener('visibilitychange', function () {
     if (!document.hidden && sync.key && sync.status !== 'sync') syncPull({ quiet: true });
+    if (document.hidden) draftFlush();
   });
+  /* 앱을 닫거나 새로 고칠 때 — 작성 중인 글을 잃지 않게 바로 남긴다 */
+  window.addEventListener('pagehide', draftFlush);
+  window.addEventListener('beforeunload', draftFlush);
 
   /* ------------------------------------------------------------------ *
    *  동작
@@ -2320,11 +2590,38 @@ textarea.field{height:auto;min-height:70px;padding:10px 12px;line-height:1.5;res
     },
     resetFilter: function () { ui.cat = 'all'; ui.q = ''; ui.rate4 = false; renderTop(); },
     newRecord: function () {
-      openSheet({ type: 'record', draft: recordDraft(null), recId: '' });
+      openRecordSheet('');
     },
     /* 헤더(PC 전용)의 새 기록 버튼 — FAB 와 같은 동작 */
     newRecordTop: function () {
-      openSheet({ type: 'record', draft: recordDraft(null), recId: '' });
+      openRecordSheet('');
+    },
+    /* 메인 화면 배너 — 임시 저장 이어 쓰기 */
+    resumeDraft: function () {
+      openRecordSheet('');
+    },
+    /* 임시 저장된 새 글 비우고 빈 폼으로 */
+    discardDraft: function () {
+      if (!sheet || sheet.type !== 'record') return;
+      draftClear();
+      sheet.draft = recordDraft(null);
+      sheet.recId = '';
+      sheet.fromDraft = false;
+      renderSheet();
+      var f = el('fName');
+      if (f) { try { f.focus(); } catch (e) { } }
+      toast('새로 쓰기 — 임시 저장을 비웠어요');
+    },
+    /* 수정 중이던 임시 저장을 버리고 저장돼 있던 기록으로 */
+    revertDraft: function () {
+      if (!sheet || sheet.type !== 'record' || !sheet.recId) return;
+      var r = byId(sheet.recId);
+      draftClear();
+      if (!r) { closeSheet(true); toast('기록을 찾지 못했어요'); return; }
+      sheet.draft = recordDraft(r);
+      sheet.fromDraft = false;
+      renderSheet();
+      toast('원래 기록으로 되돌렸어요');
     },
     saveRecord: function () { saveRecord(); },
     openDetail: function (btn) {
@@ -2336,7 +2633,7 @@ textarea.field{height:auto;min-height:70px;padding:10px 12px;line-height:1.5;res
       var id = btn.dataset.id || (sheet && sheet.recId);
       var r = id ? byId(id) : null;
       if (!r) return;
-      openSheet({ type: 'record', draft: recordDraft(r), recId: r.id });
+      openRecordSheet(r.id);
     },
     pickPhoto: function () {
       var f = el('photoInput');
@@ -2347,6 +2644,7 @@ textarea.field{height:auto;min-height:70px;padding:10px 12px;line-height:1.5;res
       sheet.draft.photo = '';
       sheet.draft.photoInfo = null;
       paintPhotoBox();
+      draftTouchNow();
       toast('사진을 뺐어요');
     },
     clearRating: function () { setRating(0); },
@@ -2355,8 +2653,9 @@ textarea.field{height:auto;min-height:70px;padding:10px 12px;line-height:1.5;res
       var r = id ? byId(id) : null;
       if (!r) return;
       askConfirm('기록 삭제', '「' + r.name + '」 기록을 지울까요?\n연동 중이면 남편 폰에서도 함께 지워져요.', '삭제', function () {
+        draftClear();
         delRecord(r.id);
-        closeSheet();
+        closeSheet(true);
         toast('삭제했어요');
       });
     },
@@ -2417,6 +2716,7 @@ textarea.field{height:auto;min-height:70px;padding:10px 12px;line-height:1.5;res
         state = seedState();
         persist();
         syncPushAll();
+        draftClear();
         ui.cat = 'all'; ui.q = ''; ui.rate4 = false; ui.tab = 'list';
         closeSheet();
         toast('샘플 주록으로 되돌렸어요');
@@ -2427,6 +2727,7 @@ textarea.field{height:auto;min-height:70px;padding:10px 12px;line-height:1.5;res
         state = emptyState();
         persist();
         syncPushAll();
+        draftClear();
         ui.cat = 'all'; ui.q = ''; ui.rate4 = false; ui.tab = 'list';
         closeSheet();
         toast('모두 지웠어요');
@@ -2464,6 +2765,7 @@ textarea.field{height:auto;min-height:70px;padding:10px 12px;line-height:1.5;res
         sheet.draft.again = was ? '' : btn.dataset.again;
       }
       updateFoot();
+      draftTouchNow();
       return;
     }
     if (group === 'cat') {
@@ -2472,6 +2774,7 @@ textarea.field{height:auto;min-height:70px;padding:10px 12px;line-height:1.5;res
       Array.prototype.forEach.call(row2.querySelectorAll('[data-chip="cat"]'), function (b) {
         b.setAttribute('aria-pressed', String(b === btn));
       });
+      draftTouchNow();
       return;
     }
     if (!form) return;
@@ -2513,6 +2816,8 @@ textarea.field{height:auto;min-height:70px;padding:10px 12px;line-height:1.5;res
       var v = String(t.value || '').replace(/[^0-9]/g, '');
       t.value = v ? comma(Number(v)) : '';
     }
+    /* 기록 시트에 적는 중 — 200ms 모았다가 임시 저장 */
+    if (sheet && sheet.type === 'record' && t && t.closest && t.closest('#recordForm')) draftTouch();
   });
 
   document.addEventListener('change', function (e) {
@@ -2538,7 +2843,10 @@ textarea.field{height:auto;min-height:70px;padding:10px 12px;line-height:1.5;res
       };
       reader.readAsText(f);
       t.value = '';
+      return;
     }
+    /* 날짜 선택처럼 input 이벤트가 확실치 않은 변경도 바로 임시 저장 */
+    if (sheet && sheet.type === 'record' && t.closest && t.closest('#recordForm')) draftTouchNow();
   });
 
   /* ------------------------------------------------------------------ *
@@ -2644,6 +2952,8 @@ textarea.field{height:auto;min-height:70px;padding:10px 12px;line-height:1.5;res
     render: render,
     openSheet: openSheet,
     closeSheet: closeSheet,
+    openRecord: openRecordSheet,
+    draft: { key: KEY_DRAFT, peek: draftPeek, save: draftCommit, clear: draftClear, flush: draftFlush },
     toast: toast,
     compressPhoto: compressPhoto,
     attachPhotoFile: attachPhotoFile,

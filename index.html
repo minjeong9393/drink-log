@@ -1630,6 +1630,12 @@ textarea.field{height:auto;min-height:70px;padding:10px 12px;line-height:1.5;res
     if (st) { st.textContent = ''; st.className = 'dstat'; }
   }
 
+  /* 그 기록의 수정 임시 저장만 지운다 (다른 임시 저장은 건드리지 않는다) */
+  function draftClearFor(recId) {
+    var found = draftPeek();
+    if (found && found.kind === 'edit' && found.recId === String(recId)) draftClear();
+  }
+
   /* 폼에 적힌 값(이름·날짜·메모·구매처·가격)을 임시 저장본으로 옮긴다. 칩·별점·사진은 이미 draft 에 있다. */
   function draftSyncForm() {
     if (!sheet || sheet.type !== 'record' || !sheet.draft) return;
@@ -2653,7 +2659,7 @@ textarea.field{height:auto;min-height:70px;padding:10px 12px;line-height:1.5;res
       var r = id ? byId(id) : null;
       if (!r) return;
       askConfirm('기록 삭제', '「' + r.name + '」 기록을 지울까요?\n연동 중이면 남편 폰에서도 함께 지워져요.', '삭제', function () {
-        draftClear();
+        draftClearFor(r.id);
         delRecord(r.id);
         closeSheet(true);
         toast('삭제했어요');
